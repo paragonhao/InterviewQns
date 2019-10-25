@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Oct 24 18:45:37 2019
-
 @author: paragonhao
 """
 import numpy as np
@@ -18,7 +17,7 @@ dim = np.shape(mat)
 maxRows = dim[0]
 maxCols = dim[1]
 
-word = ["A","B","C","D","I"]
+word = ["P","A","I","N"]
 wordLen = len(word)
 count = 0 
 
@@ -49,5 +48,3 @@ for i in range(maxRows):
         if word[0] == mat[i][j]:
             count = 0
             SearchWord(count+1, i, j)
-            
-
