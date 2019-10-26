@@ -19,7 +19,7 @@ maxCols = dim[1]
 
 backTrack = np.zeros((maxRows,maxCols))
 
-word = ["A", "B", "C", "D","I"]
+word = ["P", "A", "I", "N", "P"]
 wordLen = len(word)
 
 path = 1
