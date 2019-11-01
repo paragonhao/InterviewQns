@@ -56,6 +56,6 @@ def build_graph(key, currentKey):
 result, single_pairs = map_pairs(raw_data, result)
 result = reduce_pairs(result, single_pairs)
 
-testcase = '$ime7fcst'
+testcase = '$ime7fcst' # 'rssec5'
 build_graph(testcase , testcase)
 result[testcase]
