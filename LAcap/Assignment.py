@@ -38,19 +38,24 @@ def reduce_pairs(result, single_pairs):
         result[i[0]].append(i[1])
     return result
 
+
+
+def build_graph(key, currentKey):
+    
+    if key not in result.keys():
+        return
+    
+    if key != currentKey:
+        result[currentKey] = list(set(result[key] + result[currentKey]))
+    
+    for i in result[key]:
+        build_graph(i, currentKey)
+    
+
    
 result, single_pairs = map_pairs(raw_data, result)
 result = reduce_pairs(result, single_pairs)
 
-for key, values in result.items():
-    for output in values:
-        if output in result.keys():
-            result[key] = list(set(result[key] + result[output]))
-
-
-#testcase ='$rssec6bk'
-#for i in single_pairs:
-#    if i[0] == testcase or i[1] == testcase:
-#        print(i)
-#        
-#result['$gl1ifcst']
+testcase = '$ime7fcst'
+build_graph(testcase , testcase)
+result[testcase]
