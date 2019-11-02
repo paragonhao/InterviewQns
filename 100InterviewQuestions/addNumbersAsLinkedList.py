@@ -28,6 +28,7 @@ class Solution:
             ret.next = self.addTwoNumbers1(l1.next, l2.next, c)
         return ret
         
+    
     def addTwoNumbers2(self, l1, l2, c = 0):
         dummy = ListNode(0)
         result = dummy
