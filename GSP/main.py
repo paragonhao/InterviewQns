@@ -45,56 +45,50 @@ raw_data['delta_bid'] = raw_data[['vw_ref_price','bid_price']].apply(lambda x: c
 raw_data['delta_ask'] = raw_data[['vw_ref_price','ask_price']].apply(lambda x: cal_delta(x.ask_price, x.vw_ref_price), axis = 1)
 
 # get percentile values
-lower = np.percentile(raw_data['delta_bid'], lbpercentile)
-upper = np.percentile(raw_data['delta_bid'], ubpercentile)
+lower_bid = np.percentile(raw_data['delta_bid'], lbpercentile)
+upper_bid = np.percentile(raw_data['delta_bid'], ubpercentile)
 
-raw_data.loc[raw_data['delta_bid'] < lower, 'delta_bid'] = lower
-raw_data.loc[raw_data['delta_bid'] > upper, 'delta_bid'] = upper
+raw_data.loc[raw_data['delta_bid'] < lower_bid, 'delta_bid'] = lower_bid
+raw_data.loc[raw_data['delta_bid'] > upper_bid, 'delta_bid'] = upper_bid
 
-raw_data.loc[raw_data['delta_ask'] < lower, 'delta_ask'] = lower
-raw_data.loc[raw_data['delta_ask'] > upper, 'delta_ask'] = upper
+
+lower_ask = np.percentile(raw_data['delta_ask'], lbpercentile)
+upper_ask = np.percentile(raw_data['delta_ask'], ubpercentile)
+
+raw_data.loc[raw_data['delta_ask'] < lower_ask, 'delta_ask'] = lower_ask
+raw_data.loc[raw_data['delta_ask'] > upper_ask, 'delta_ask'] = upper_ask
+
+# qty 
+bid_qty_lower = np.percentile(raw_data['bid_qty'], lbpercentile)
+bid_qty_upper = np.percentile(raw_data['bid_qty'], ubpercentile)
+
+raw_data.loc[raw_data['bid_qty'] < bid_qty_lower, 'bid_qty'] = bid_qty_lower
+raw_data.loc[raw_data['bid_qty'] > bid_qty_upper, 'bid_qty'] = bid_qty_upper
+
+ask_qty_lower = np.percentile(raw_data['ask_qty'], lbpercentile)
+ask_qty_upper = np.percentile(raw_data['ask_qty'], ubpercentile)
+
+raw_data.loc[raw_data['ask_qty'] < ask_qty_lower, 'ask_qty'] = ask_qty_lower
+raw_data.loc[raw_data['ask_qty'] > ask_qty_upper, 'ask_qty'] = ask_qty_upper
+
 
 
 # get lambda values
-raw_data['lnLambda_bid'] = raw_data[['bid_qty']].apply(lambda x: math.log(x.bid_qty), axis = 1)
-raw_data['lnLambda_ask'] = raw_data[['ask_qty']].apply(lambda x: math.log(x.ask_qty), axis = 1)
-
-lambda_lower = np.percentile(raw_data['lnLambda_bid'], lbpercentile)
-lambda_upper = np.percentile(raw_data['lnLambda_ask'], ubpercentile)
-
-raw_data.loc[raw_data['lnLambda_bid'] < lambda_lower, 'lnLambda_bid'] = lambda_lower
-raw_data.loc[raw_data['lnLambda_bid'] > lambda_upper, 'lnLambda_bid'] = lambda_upper
-
-raw_data.loc[raw_data['lnLambda_ask'] < lambda_lower, 'lnLambda_ask'] = lambda_lower
-raw_data.loc[raw_data['lnLambda_ask'] > lambda_upper, 'lnLambda_ask'] = lambda_upper
-
+raw_data['lnLambda_bid'] = raw_data[['bid_qty']].apply(lambda x: 1/math.log(x.bid_qty), axis = 1)
+raw_data['lnLambda_ask'] = raw_data[['ask_qty']].apply(lambda x: 1/math.log(x.ask_qty), axis = 1)
 
 # append the two columns together 
 Y = raw_data['lnLambda_bid'].append(raw_data['lnLambda_ask']).reset_index(drop=True)
 X = raw_data['delta_bid'].append(raw_data['delta_ask']).reset_index(drop=True)
 X = sm.add_constant(X)
 
-model = sm.OLS(Y , X).fit() ## sm.OLS(output, input)
+
+model = sm.OLS(Y, X).fit() ## sm.OLS(output, input)
 # in sample prediction
 predictions = model.predict(X)
 model.summary()
 
 
-
-
-# out of sample testing 
-X_train = X[1:200000]
-Y_train = Y[1:200000]
-
-model_out_of_sample = sm.OLS(Y_train , X_train).fit() ## sm.OLS(output, input)
-# in sample prediction
-predictions_out_of_sample = model_out_of_sample.predict(X[200000:len(X)])
-model_out_of_sample.summary()
-
-sse = np.sum(np.square(np.asarray(predictions_out_of_sample) - np.mean(np.asarray(X[200000:len(X)][0]))))
-sst = np.sum(np.square(np.asarray(predictions_out_of_sample) - np.asarray(X[200000:len(X)][0]))) 
-r_squared = 1 - (sse/sst)
-r_adj = 1 - (1-r_squared) * (200000 - 1) /(200000 - 2 - 1)
 
 
 # plot 
@@ -108,7 +102,32 @@ plt.hist(raw_data['ask_qty'], bins=100)
 raw_data['spread'] = raw_data[['bid_price','ask_price']].apply(lambda x: find_spread(x.bid_price, x.ask_price), axis = 1)
 plt.hist(raw_data['spread'], bins=100)
 
-max(raw_data['bid_qty'])
+
+plt.style.use('ggplot')
+plt.xlabel('delta')
+plt.ylabel('lnLambda bid')
+Y = raw_data['lnLambda_bid'].append(raw_data['lnLambda_ask']).reset_index(drop=True)
+X = raw_data['delta_bid'].append(raw_data['delta_ask']).reset_index(drop=True)
+plt.scatter(X, Y)
+plt.show()
+
+
+
+
+# out of sample testin
+X_train = X[1:200000]
+Y_train = Y[1:200000]
+
+model_out_of_sample = sm.OLS(Y_train , X_train).fit() ## sm.OLS(output, input)
+# in sample prediction
+predictions_out_of_sample = model_out_of_sample.predict(X[200000:len(X)])
+model_out_of_sample.summary()
+
+sse = np.sum(np.square(np.asarray(predictions_out_of_sample) - np.mean(np.asarray(X[200000:len(X)][0]))))
+sst = np.sum(np.square(np.asarray(predictions_out_of_sample) - np.asarray(X[200000:len(X)][0]))) 
+r_squared = 1 - (sse/sst)
+r_adj = 1 - (1-r_squared) * (200000 - 1) /(200000 - 2 - 1)
+
 
 
 
